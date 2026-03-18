@@ -58,7 +58,7 @@ A Python TypedDict with four fields:
 - *Learning: chaining LLM calls, passing context between steps, structured prompting*
 
 ### Writer Agent (`agents/writer.py`)
-- Input: `state.analysis`
+- Input: `state.analysis` (required) + `state.research` (optional, for richer context)
 - Process: writes a professional 1-page markdown business report
 - Output: writes to `state.report`
 - *Learning: formatting prompts, file I/O in Python (`open`, `write`)*
@@ -130,6 +130,17 @@ Each step introduces one new concept:
 - `pip install` the packages in `requirements.txt`
 - Anthropic API key (already available via Claude Code)
 - LangSmith account (free tier) + API key
+
+### Required `.env` variables
+
+```
+ANTHROPIC_API_KEY=...
+LANGCHAIN_API_KEY=...          ← your LangSmith API key
+LANGCHAIN_TRACING_V2=true      ← enables tracing to LangSmith dashboard
+LANGCHAIN_PROJECT=research-workflow   ← names the project in the dashboard
+```
+
+Without `LANGCHAIN_TRACING_V2=true`, LangSmith will silently not record anything.
 
 ---
 
