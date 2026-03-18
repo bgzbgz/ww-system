@@ -1,0 +1,179 @@
+# Validation Contract: File Upload Validation Rules
+# Spec: 006-boss-office-upload
+
+---
+contract: validation
+version: "1.0.0"
+description: "Contract defining all file validation rules and error responses"
+
+---
+
+# Validation Rules
+rules:
+  file_type:
+    id: "VAL-001"
+    name: "File Type Validation"
+    description: "Validates file has supported extension"
+
+    valid_extensions:
+      - extension: ".pdf"
+        case_sensitive: false
+        mime_types:
+          - "application/pdf"
+      - extension: ".docx"
+        case_sensitive: false
+        mime_types:
+          - "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      - extension: ".txt"
+        case_sensitive: false
+        mime_types:
+          - "text/plain"
+      - extension: ".md"
+        case_sensitive: false
+        mime_types:
+          - "text/markdown"
+          - "text/plain"
+          - "text/x-markdown"
+
+    validation_method: "extension_primary"
+    note: "Extension is primary check; MIME unreliable for .md files"
+
+    error:
+      message: "Wrong file type. Use PDF, DOCX, TXT, or MD."
+      code: "INVALID_FILE_TYPE"
+
+  ---
+
+  file_size_max:
+    id: "VAL-002"
+    name: "Maximum File Size Validation"
+    description: "Validates file does not exceed size limit"
+
+    max_bytes: 10485760  # 10MB
+    max_display: "10 MB"
+
+    error:
+      message: "File too large. Split it."
+      code: "FILE_TOO_LARGE"
+
+  ---
+
+  file_size_min:
+    id: "VAL-003"
+    name: "Minimum File Size Validation"
+    description: "Validates file is not empty"
+
+    min_bytes: 1
+
+    error:
+      message: "File is empty. Upload a document with content."
+      code: "FILE_EMPTY"
+
+  ---
+
+  file_count:
+    id: "VAL-004"
+    name: "Single File Validation"
+    description: "Validates only one file is uploaded at a time"
+
+    max_files: 1
+
+    error:
+      message: "One file at a time. Drop a single file."
+      code: "MULTIPLE_FILES"
+
+---
+
+# Validation Order
+validation_order:
+  description: "Order in which validations are performed"
+  sequence:
+    1: "file_count"    # Check single file first
+    2: "file_type"     # Then check extension
+    3: "file_size_min" # Then check not empty
+    4: "file_size_max" # Finally check not too large
+
+  stop_on_first_error: true
+  note: "Only first error is shown to user"
+
+---
+
+# Validation Timing
+timing:
+  trigger: "Immediate on file drop or selection"
+  max_latency_ms: 500
+  blocking: true  # Prevents upload until validation passes
+  client_side: true  # Validation runs in browser
+
+---
+
+# Error Display Contract
+error_display:
+  location: "Below dropzone"
+  component: ".ft-error"
+  style:
+    background: "#FFF469"  # Fast Track yellow
+    text_color: "#000000"  # Black
+    border: "3px solid #000000"
+    border_radius: 0  # No rounded corners
+
+  behavior:
+    show: "Immediately on validation failure"
+    hide: "When new file is dropped/selected"
+    animation: "none"  # No fancy transitions per brand
+
+---
+
+# Test Cases
+test_cases:
+  valid_files:
+    - filename: "document.pdf"
+      size: 1048576  # 1MB
+      expected: "pass"
+
+    - filename: "document.PDF"
+      size: 1048576
+      expected: "pass"
+      note: "Case insensitive"
+
+    - filename: "notes.docx"
+      size: 524288  # 512KB
+      expected: "pass"
+
+    - filename: "readme.txt"
+      size: 1024  # 1KB
+      expected: "pass"
+
+    - filename: "spec.md"
+      size: 2048  # 2KB
+      expected: "pass"
+
+    - filename: "large-but-valid.pdf"
+      size: 10485760  # Exactly 10MB
+      expected: "pass"
+
+  invalid_type:
+    - filename: "image.jpg"
+      expected_error: "Wrong file type. Use PDF, DOCX, TXT, or MD."
+
+    - filename: "spreadsheet.xlsx"
+      expected_error: "Wrong file type. Use PDF, DOCX, TXT, or MD."
+
+    - filename: "program.exe"
+      expected_error: "Wrong file type. Use PDF, DOCX, TXT, or MD."
+
+    - filename: "archive.zip"
+      expected_error: "Wrong file type. Use PDF, DOCX, TXT, or MD."
+
+  invalid_size:
+    - filename: "huge.pdf"
+      size: 15728640  # 15MB
+      expected_error: "File too large. Split it."
+
+    - filename: "empty.txt"
+      size: 0
+      expected_error: "File is empty. Upload a document with content."
+
+  invalid_count:
+    - files: ["doc1.pdf", "doc2.pdf"]
+      expected_error: "One file at a time. Drop a single file."

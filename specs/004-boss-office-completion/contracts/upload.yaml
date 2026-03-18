@@ -1,0 +1,191 @@
+openapi: 3.0.3
+info:
+  title: Boss Office Upload API
+  description: Upload source document and trigger n8n Worker workflow
+  version: 1.0.0
+  contact:
+    name: Boss Office Admin
+    email: boss@fasttrack.com
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://api.fast track.com
+    description: Production server
+
+paths:
+  /api/boss/upload:
+    post:
+      summary: Upload source document
+      description: |
+        Upload a source document (.txt, .md, .pdf, .docx) with tool purpose and client name.
+        The system parses the document, extracts text, and calls the n8n Worker webhook
+        to trigger tool generation. Returns immediately after parsing (does not wait for Worker).
+      operationId: uploadDocument
+      tags:
+        - Upload
+      security:
+        - ClerkJWT: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+                - tool_purpose
+                - client_name
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Source document file (.txt, .md, .pdf, .docx)
+                tool_purpose:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                  example: "Budget Calculator"
+                  description: What the tool does
+                client_name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                  example: "Acme Corp"
+                  description: Who the tool is for
+            encoding:
+              file:
+                contentType: text/plain, text/markdown, application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document
+      responses:
+        '200':
+          description: Upload successful, Worker webhook triggered
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - request_id
+                  - file_name
+                  - file_size
+                  - extracted_text
+                  - worker_webhook_called_at
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  request_id:
+                    type: string
+                    example: "req_abc123def456"
+                    description: Unique upload request ID
+                  file_name:
+                    type: string
+                    example: "knowthyself.docx"
+                    description: Original filename
+                  file_size:
+                    type: integer
+                    example: 2548736
+                    description: File size in bytes
+                  extracted_text:
+                    type: string
+                    example: "Know thyself is the first step..."
+                    description: Parsed text content (truncated for response)
+                  text_length:
+                    type: integer
+                    example: 5432
+                    description: Full extracted text length
+                  worker_webhook_called_at:
+                    type: string
+                    format: date-time
+                    example: "2026-01-22T10:30:45.123Z"
+                    description: When Worker webhook was triggered
+              example:
+                success: true
+                request_id: "req_abc123def456"
+                file_name: "knowthyself.docx"
+                file_size: 2548736
+                extracted_text: "Know thyself is the first step to mastering your energy..."
+                text_length: 5432
+                worker_webhook_called_at: "2026-01-22T10:30:45.123Z"
+        '400':
+          description: Bad request - Invalid file type or size exceeds 10MB
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidFileType:
+                  summary: Invalid file type
+                  value:
+                    error: "INVALID_FILE_TYPE"
+                    message: "Invalid file type. Allowed: .txt, .md, .pdf, .docx"
+                fileTooLarge:
+                  summary: File too large
+                  value:
+                    error: "FILE_TOO_LARGE"
+                    message: "File too large. Maximum size: 10MB"
+                missingFields:
+                  summary: Missing required fields
+                  value:
+                    error: "VALIDATION_ERROR"
+                    message: "Missing required fields: tool_purpose, client_name"
+        '401':
+          description: Unauthorized - User not authenticated or not in Boss email whitelist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "UNAUTHORIZED"
+                message: "Boss authentication required"
+        '413':
+          description: Payload too large - File exceeds 10MB
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "PAYLOAD_TOO_LARGE"
+                message: "File too large. Maximum size: 10MB"
+        '500':
+          description: Internal server error - File parsing failed or Worker webhook unreachable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                parsingFailed:
+                  summary: File parsing failed
+                  value:
+                    error: "PARSING_ERROR"
+                    message: "PDF parsing failed: File is encrypted or corrupted"
+                webhookFailed:
+                  summary: Worker webhook failed
+                  value:
+                    error: "WEBHOOK_ERROR"
+                    message: "Worker webhook failed: Connection timeout after 60s"
+
+components:
+  securitySchemes:
+    ClerkJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Clerk authentication JWT token
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details (optional)

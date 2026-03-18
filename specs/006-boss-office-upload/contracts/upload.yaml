@@ -1,0 +1,178 @@
+# Upload Contract: File Upload to Create Job
+# Spec: 006-boss-office-upload
+
+---
+contract: upload
+version: "1.0.0"
+description: "Contract for file upload functionality to create a Job in DRAFT state"
+
+---
+
+# Input Contract
+input:
+  file:
+    type: File
+    required: true
+    constraints:
+      extensions:
+        - ".pdf"
+        - ".docx"
+        - ".txt"
+        - ".md"
+      case_sensitive: false
+      max_size_bytes: 10485760  # 10MB
+      min_size_bytes: 1         # Not empty
+      multiple: false           # Single file only
+
+---
+
+# Validation Contract
+validation:
+  file_type:
+    rule: "Extension must be pdf, docx, txt, or md (case-insensitive)"
+    error: "Wrong file type. Use PDF, DOCX, TXT, or MD."
+    timing: "Immediate on drop/select"
+    max_latency_ms: 500
+
+  file_size_max:
+    rule: "File size must be <= 10MB (10,485,760 bytes)"
+    error: "File too large. Split it."
+    timing: "Immediate on drop/select"
+    max_latency_ms: 500
+
+  file_size_min:
+    rule: "File size must be > 0 bytes"
+    error: "File is empty. Upload a document with content."
+    timing: "Immediate on drop/select"
+    max_latency_ms: 500
+
+  multiple_files:
+    rule: "Only one file allowed per upload"
+    error: "One file at a time. Drop a single file."
+    timing: "Immediate on drop"
+    max_latency_ms: 100
+
+---
+
+# Output Contract
+output:
+  job:
+    job_id:
+      type: string
+      format: "UUID v4"
+      example: "550e8400-e29b-41d4-a716-446655440000"
+      generated: true
+
+    original_filename:
+      type: string
+      max_length: 255
+      example: "market-analysis.pdf"
+      sanitized: true
+
+    file_type:
+      type: enum
+      values: ["PDF", "DOCX", "TXT", "MD"]
+      example: "PDF"
+
+    file_size_bytes:
+      type: integer
+      min: 1
+      max: 10485760
+      example: 2621440
+
+    file_storage_key:
+      type: string
+      format: "Storage reference"
+      example: "uploads/550e8400-e29b-41d4-a716-446655440000/market-analysis.pdf"
+
+    created_at:
+      type: datetime
+      format: "ISO 8601"
+      example: "2026-01-24T10:30:00Z"
+
+    status:
+      type: enum
+      value: "DRAFT"
+      fixed: true
+
+---
+
+# Interaction Contract
+interaction:
+  methods:
+    drag_drop:
+      events:
+        - dragenter: "Show yellow highlight on dropzone"
+        - dragover: "Maintain highlight, prevent default"
+        - dragleave: "Remove highlight"
+        - drop: "Process file, remove highlight"
+      feedback:
+        drag_over_color: "#FFF469"  # Fast Track yellow
+        border_style: "3px solid #000000"
+
+    file_picker:
+      trigger: "Click 'Choose File' button"
+      dialog_filter: ".pdf,.docx,.txt,.md"
+      behavior: "Opens native file dialog"
+
+  display:
+    file_selected:
+      - filename: "Display original filename"
+      - type_badge: "Display file type as badge (PDF/DOCX/TXT/MD)"
+      - size: "Display formatted size (KB/MB)"
+      - remove_button: "Allow cancellation before submit"
+
+---
+
+# Error States Contract
+error_states:
+  validation_error:
+    display: "Inline error message below dropzone"
+    style: ".ft-error component with yellow background"
+    duration: "Until new file dropped"
+    action: "Clear error, return to ready state"
+
+  network_error:
+    message: "Upload failed. Check connection and try again."
+    display: "Error message with retry button"
+    action: "Retry uploads same file"
+
+  storage_error:
+    message: "Storage unavailable. Try again later."
+    display: "Error message"
+    action: "Job not created, allow retry"
+
+---
+
+# Success State Contract
+success_state:
+  display:
+    message: "File uploaded"
+    job_id: "Display generated job_id"
+    style: ".ft-success component"
+  action:
+    primary: "Proceed to job configuration (future spec)"
+    secondary: "Upload another file"
+
+---
+
+# QA Contract
+qa:
+  pass_criteria:
+    - "Valid file types accepted without error"
+    - "Invalid file types rejected with correct message"
+    - "Files > 10MB rejected with correct message"
+    - "Files = 0 bytes rejected with correct message"
+    - "Job created with all required fields"
+    - "File stored with binary fidelity"
+    - "Drag-over shows yellow highlight"
+    - "File picker filters to supported types"
+    - "Brand compliance (colors, borders, no rounded corners)"
+
+  fail_criteria:
+    - "Any unsupported file type accepted"
+    - "Any file > 10MB accepted"
+    - "Missing or incorrect Job fields"
+    - "File storage corruption"
+    - "Wrong error message for validation failure"
+    - "Non-brand colors or rounded corners"

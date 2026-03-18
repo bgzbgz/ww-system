@@ -1,0 +1,189 @@
+openapi: 3.0.3
+info:
+  title: Boss Office Reject Tool API
+  description: Reject tool with feedback
+  version: 1.0.0
+  contact:
+    name: Boss Office Admin
+    email: boss@fasttrack.com
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://api.fasttrack.com
+    description: Production server
+
+paths:
+  /api/boss/tools/{tool_id}/reject:
+    put:
+      summary: Reject tool with feedback
+      description: |
+        Reject a tool that has status "pending_review" and provide feedback explaining
+        why it doesn't meet requirements. This endpoint:
+        1. Updates tool status to "rejected"
+        2. Sets boss_review_status to "rejected"
+        3. Stores boss_feedback with rejection reason
+        4. Sets boss_reviewed_at timestamp
+
+        Rejected tools are terminal state - they cannot be approved or revised later.
+        The tool will no longer appear in the "Pending Review" filter.
+      operationId: rejectTool
+      tags:
+        - Review
+      security:
+        - ClerkJWT: []
+      parameters:
+        - name: tool_id
+          in: path
+          required: true
+          description: Unique tool identifier
+          schema:
+            type: string
+            pattern: ^tool_[a-z0-9]{3,}$
+            example: "tool_001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - boss_feedback
+              properties:
+                boss_feedback:
+                  type: string
+                  minLength: 1
+                  maxLength: 2000
+                  example: "Does not match Fast Track brand guidelines. Colors are off, typography is wrong."
+                  description: Boss's rejection reason (required)
+            example:
+              boss_feedback: "Does not match Fast Track brand guidelines. Colors are off, typography is wrong."
+      responses:
+        '200':
+          description: Tool rejected successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - tool_id
+                  - status
+                  - boss_review_status
+                  - boss_feedback
+                  - boss_reviewed_at
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  tool_id:
+                    type: string
+                    example: "tool_001"
+                  status:
+                    type: string
+                    enum: [rejected]
+                    example: "rejected"
+                  boss_review_status:
+                    type: string
+                    enum: [rejected]
+                    example: "rejected"
+                  boss_feedback:
+                    type: string
+                    example: "Does not match Fast Track brand guidelines. Colors are off, typography is wrong."
+                  boss_reviewed_at:
+                    type: string
+                    format: date-time
+                    example: "2026-01-22T10:45:30.123Z"
+              example:
+                success: true
+                tool_id: "tool_001"
+                status: "rejected"
+                boss_review_status: "rejected"
+                boss_feedback: "Does not match Fast Track brand guidelines. Colors are off, typography is wrong."
+                boss_reviewed_at: "2026-01-22T10:45:30.123Z"
+        '400':
+          description: Bad request - Missing boss_feedback or invalid tool_id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingFeedback:
+                  summary: Missing boss_feedback
+                  value:
+                    error: "VALIDATION_ERROR"
+                    message: "boss_feedback is required for rejection"
+                invalidToolId:
+                  summary: Invalid tool_id format
+                  value:
+                    error: "VALIDATION_ERROR"
+                    message: "Invalid tool_id format. Expected: tool_xxx"
+        '401':
+          description: Unauthorized - User not authenticated or not Boss
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "UNAUTHORIZED"
+                message: "Boss authentication required"
+        '404':
+          description: Not found - Tool with tool_id does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "NOT_FOUND"
+                message: "Tool with tool_id 'tool_001' not found"
+        '409':
+          description: Conflict - Tool status is not "pending_review"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                alreadyDeployed:
+                  summary: Tool already deployed
+                  value:
+                    error: "CONFLICT"
+                    message: "Tool is already deployed and cannot be rejected"
+                alreadyRejected:
+                  summary: Tool already rejected
+                  value:
+                    error: "CONFLICT"
+                    message: "Tool has already been rejected"
+        '500':
+          description: Internal server error - MongoDB update failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "DATABASE_ERROR"
+                message: "Failed to reject tool: Write conflict"
+
+components:
+  securitySchemes:
+    ClerkJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Clerk authentication JWT token
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details (optional)

@@ -1,0 +1,218 @@
+# Job Entity Contract
+# Spec: 006-boss-office-upload
+
+---
+contract: job
+version: "1.0.0"
+description: "Contract defining the Job entity structure and behavior"
+
+---
+
+# Entity Definition
+entity:
+  name: "Job"
+  description: "Represents a document upload that will be processed by Factory"
+  collection: "jobs"
+  database: "fast_track_tools"
+
+---
+
+# Fields
+fields:
+  job_id:
+    type: string
+    format: "UUID v4"
+    required: true
+    unique: true
+    indexed: true
+    generated: true
+    immutable: true
+    example: "550e8400-e29b-41d4-a716-446655440000"
+    description: "Unique identifier for the Job"
+
+  original_filename:
+    type: string
+    required: true
+    max_length: 255
+    sanitization: "Remove invalid filesystem characters"
+    example: "market-analysis.pdf"
+    description: "Original filename as uploaded by Boss"
+
+  file_type:
+    type: enum
+    required: true
+    values:
+      - "PDF"
+      - "DOCX"
+      - "TXT"
+      - "MD"
+    example: "PDF"
+    description: "Type of document uploaded"
+
+  file_size_bytes:
+    type: integer
+    required: true
+    min: 1
+    max: 10485760
+    example: 2621440
+    description: "Size of uploaded file in bytes"
+
+  file_storage_key:
+    type: string
+    required: true
+    format: "storage_path"
+    example: "uploads/550e8400-e29b-41d4-a716-446655440000/market-analysis.pdf"
+    description: "Reference to file in storage system"
+
+  created_at:
+    type: datetime
+    required: true
+    format: "ISO 8601"
+    generated: true
+    immutable: true
+    example: "2026-01-24T10:30:00.000Z"
+    description: "Timestamp when Job was created"
+
+  status:
+    type: enum
+    required: true
+    default: "DRAFT"
+    values:
+      - "DRAFT"
+      - "SUBMITTED"
+      - "PROCESSING"
+      - "COMPLETED"
+      - "FAILED"
+    example: "DRAFT"
+    description: "Current state of the Job"
+    note: "This spec only creates DRAFT jobs; other states in future specs"
+
+---
+
+# Indexes
+indexes:
+  - name: "job_id_unique"
+    fields: ["job_id"]
+    type: "unique"
+
+  - name: "status_idx"
+    fields: ["status"]
+    type: "standard"
+
+  - name: "created_at_idx"
+    fields: ["created_at"]
+    type: "standard"
+    order: "descending"
+
+---
+
+# Creation Contract
+creation:
+  method: "POST /api/boss/jobs"
+  content_type: "multipart/form-data"
+
+  request:
+    file:
+      type: "binary"
+      required: true
+      description: "The uploaded file"
+
+  response:
+    success:
+      status_code: 201
+      body:
+        job_id: "string"
+        original_filename: "string"
+        file_type: "string"
+        file_size_bytes: "number"
+        created_at: "string"
+        status: "DRAFT"
+
+    errors:
+      invalid_file_type:
+        status_code: 400
+        body:
+          error: "Wrong file type. Use PDF, DOCX, TXT, or MD."
+          code: "INVALID_FILE_TYPE"
+
+      file_too_large:
+        status_code: 413
+        body:
+          error: "File too large. Split it."
+          code: "FILE_TOO_LARGE"
+
+      file_empty:
+        status_code: 400
+        body:
+          error: "File is empty. Upload a document with content."
+          code: "FILE_EMPTY"
+
+      storage_error:
+        status_code: 500
+        body:
+          error: "Storage unavailable. Try again later."
+          code: "STORAGE_ERROR"
+
+---
+
+# State Machine
+state_machine:
+  initial_state: "DRAFT"
+
+  transitions:
+    from_draft:
+      - to: "SUBMITTED"
+        trigger: "Boss submits to Factory"
+        spec: "future"
+
+    from_submitted:
+      - to: "PROCESSING"
+        trigger: "Factory starts processing"
+        spec: "future"
+
+    from_processing:
+      - to: "COMPLETED"
+        trigger: "Factory completes successfully"
+        spec: "future"
+      - to: "FAILED"
+        trigger: "Factory processing fails"
+        spec: "future"
+
+  note: "This spec only implements creation in DRAFT state"
+
+---
+
+# Display Formatting
+display:
+  file_size:
+    format: "human_readable"
+    rules:
+      - condition: "< 1024"
+        format: "{bytes} B"
+      - condition: "< 1048576"
+        format: "{kb} KB"
+        precision: 1
+      - condition: ">= 1048576"
+        format: "{mb} MB"
+        precision: 1
+
+  file_type:
+    component: ".ft-badge"
+    text_transform: "uppercase"
+
+  status:
+    DRAFT:
+      badge_class: ".ft-badge--muted"
+      label: "DRAFT"
+    SUBMITTED:
+      badge_class: ".ft-badge"
+      label: "SUBMITTED"
+    PROCESSING:
+      badge_class: ".ft-badge--accent"
+      label: "PROCESSING"
+    COMPLETED:
+      badge_class: ".ft-badge"
+      label: "COMPLETED"
+    FAILED:
+      badge_class: ".ft-badge--error"
+      label: "FAILED"

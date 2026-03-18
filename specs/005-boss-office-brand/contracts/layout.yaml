@@ -1,0 +1,114 @@
+# Layout Contract: Fast Track Brand Grid & Spacing
+# All page layouts MUST follow these structural rules
+
+grid:
+  system: "12-column"
+  implementation: "CSS Grid"
+
+  desktop:
+    columns: 12
+    gap: "24px"      # --ft-space-3
+    margin: "32px"   # --ft-space-4
+    max_width: "1440px"
+
+  tablet:
+    breakpoint: "768px"
+    columns: 8
+    gap: "24px"
+    margin: "24px"
+
+  mobile:
+    breakpoint: "375px"
+    columns: 4
+    gap: "16px"      # --ft-space-2
+    margin: "16px"
+
+alignment:
+  default: left
+  rules:
+    - text_align: left
+    - justify_content: flex-start
+    - align_items: flex-start
+  exceptions:
+    - hero_headlines: "May be centered for impact"
+    - modal_actions: "May be right-aligned"
+  forbidden:
+    - centered_body_text: "Never center paragraphs"
+    - centered_cards: "Cards align to grid, not centered"
+
+spacing_scale:
+  base_unit: "8px"
+  scale:
+    space_0: "0"
+    space_1: "8px"    # Tight gaps, icon padding
+    space_2: "16px"   # Standard element spacing
+    space_3: "24px"   # Section padding, card padding
+    space_4: "32px"   # Large gaps, page margins
+    space_5: "40px"   # Section separators
+    space_6: "48px"   # Major section breaks
+    space_8: "64px"   # Page-level spacing
+    space_10: "80px"  # Hero sections
+
+containers:
+  card:
+    border: "3px solid #000000"
+    border_radius: 0  # NEVER rounded
+    background: "#FFFFFF"
+    padding: "24px"   # --ft-space-3
+    shadow: none      # NEVER shadows
+
+  modal:
+    border: "3px solid #000000"
+    border_radius: 0
+    background: "#FFFFFF"
+    padding: "32px"   # --ft-space-4
+    shadow: none
+    overlay_color: "rgba(0, 0, 0, 0.8)"
+
+  section:
+    border: none
+    padding_vertical: "48px"  # --ft-space-6
+    padding_horizontal: "32px"
+
+header:
+  height: "64px"
+  background: "#000000"
+  padding: "0 32px"
+  logo_position: "top-right"
+  logo_asset: "Designs/02. logos/FastTrack_F_White.png"
+  logo_padding: "16px"  # Minimum from edges
+
+visual_hierarchy:
+  rules:
+    - larger_is_more_important: true
+    - heavier_is_more_important: true
+    - spacing_creates_grouping: true
+  minimum_contrast:
+    heading_vs_body: "8px size difference minimum"
+    section_separation: "48px minimum"
+
+white_space:
+  philosophy: "Generous and intentional"
+  rules:
+    - never_cramped: "Space is a design element"
+    - breathing_room: "Elements need space around them"
+    - consistent_rhythm: "Use spacing scale, not arbitrary values"
+
+forbidden_patterns:
+  - rounded_corners: "border-radius: 0 always"
+  - drop_shadows: "No box-shadow on any element"
+  - centered_layouts: "Left-align by default"
+  - arbitrary_spacing: "Use 8px scale only"
+  - cluttered_interfaces: "White space is mandatory"
+
+responsive_behavior:
+  stack_order: "vertical"
+  maintain:
+    - left_alignment: true
+    - brand_colors: true
+    - border_styles: true
+    - spacing_ratios: true
+  adjust:
+    - grid_columns: "12 → 8 → 4"
+    - font_sizes: "Proportional reduction"
+    - margins: "32px → 24px → 16px"

@@ -1,0 +1,134 @@
+# Typography Contract: Fast Track Brand Fonts
+# All text elements MUST follow these rules
+
+fonts:
+  plaak:
+    family: "Plaak"
+    full_name: "Plaak Ex Condensed 43 Bold"
+    file: "Designs/03. Fonts/woff2/Plaak3Trial-43-Bold.woff2"
+    format: "woff2"
+    weight: 700
+    style: normal
+    css_variable: "--ft-font-headline"
+    fallback: "sans-serif"
+    usage:
+      - Page titles
+      - Section headings
+      - Card titles
+      - Modal titles
+      - Navigation labels
+    rules:
+      text_transform: uppercase  # ALWAYS
+      max_line_length: 50        # Characters - keep headlines short
+      constraints:
+        - MUST be uppercase
+        - MUST be bold (700)
+        - MUST be short, punchy statements
+        - MUST NOT be used for body copy
+
+  riforma:
+    family: "Riforma"
+    full_name: "Riforma LL Regular"
+    file: "Designs/03. Fonts/woff2/RiformaLL-Regular.woff2"
+    format: "woff2"
+    weight: 400
+    style: normal
+    css_variable: "--ft-font-body"
+    fallback: "sans-serif"
+    usage:
+      - Body copy
+      - Paragraphs
+      - Button labels
+      - Form inputs
+      - Error messages
+      - Success messages
+    rules:
+      text_transform: none  # Sentence case
+      line_height: 1.5
+      max_paragraph_sentences: 3
+      constraints:
+        - MUST be sentence case
+        - MUST be regular weight (400)
+        - MUST NOT be used for headlines
+
+  monument:
+    family: "Monument Grotesk Mono"
+    full_name: "Monument Grotesk Mono"
+    file: "Designs/03. Fonts/woff2/MonumentGrotesk-Mono.woff2"
+    format: "woff2"
+    weight: 400
+    style: normal
+    css_variable: "--ft-font-mono"
+    fallback: "monospace"
+    usage:
+      - Labels
+      - Meta text
+      - Annotations
+      - Timestamps
+      - Status badges
+      - Code/technical references
+    rules:
+      text_transform: uppercase  # ALWAYS
+      constraints:
+        - MUST be uppercase
+        - Use sparingly
+        - For labels and meta only
+
+font_sizes:
+  xs:
+    value: "12px"
+    css_variable: "--ft-font-size-xs"
+    usage: ["labels", "captions", "badges"]
+
+  sm:
+    value: "14px"
+    css_variable: "--ft-font-size-sm"
+    usage: ["meta text", "helper text", "small buttons"]
+
+  base:
+    value: "16px"
+    css_variable: "--ft-font-size-base"
+    usage: ["body copy", "form inputs", "standard buttons"]
+
+  md:
+    value: "18px"
+    css_variable: "--ft-font-size-md"
+    usage: ["lead paragraphs", "important body text"]
+
+  lg:
+    value: "24px"
+    css_variable: "--ft-font-size-lg"
+    usage: ["section headings", "card titles"]
+
+  xl:
+    value: "32px"
+    css_variable: "--ft-font-size-xl"
+    usage: ["page titles"]
+
+  2xl:
+    value: "48px"
+    css_variable: "--ft-font-size-2xl"
+    usage: ["hero headlines"]
+
+line_heights:
+  tight:
+    value: 1.2
+    css_variable: "--ft-line-height-tight"
+    usage: ["headlines"]
+
+  normal:
+    value: 1.5
+    css_variable: "--ft-line-height-normal"
+    usage: ["body copy"]
+
+  relaxed:
+    value: 1.75
+    css_variable: "--ft-line-height-relaxed"
+    usage: ["long-form reading"]
+
+loading_strategy:
+  preload: true
+  font_display: swap
+  critical_fonts:
+    - plaak    # Needed for first paint (headlines)
+    - riforma  # Needed for first paint (body)

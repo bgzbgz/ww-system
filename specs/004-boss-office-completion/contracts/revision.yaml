@@ -1,0 +1,204 @@
+openapi: 3.0.3
+info:
+  title: Boss Office Request Revision API
+  description: Request tool revision with change instructions
+  version: 1.0.0
+  contact:
+    name: Boss Office Admin
+    email: boss@fasttrack.com
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://api.fasttrack.com
+    description: Production server
+
+paths:
+  /api/boss/tools/{tool_id}/request-revision:
+    put:
+      summary: Request tool revision
+      description: |
+        Request revision of a tool with specific change instructions. This endpoint:
+        1. Updates tool status to "revision_requested"
+        2. Stores boss_feedback with change instructions
+        3. Calls n8n Revision webhook with tool_id, boss_feedback, current_html
+        4. Revision workflow regenerates tool and sends back to QA
+        5. After QA approval, tool returns to "pending_review" status
+
+        This creates a feedback loop: Boss requests changes → AI regenerates →
+        QA scores → Boss reviews again.
+      operationId: requestRevision
+      tags:
+        - Review
+      security:
+        - ClerkJWT: []
+      parameters:
+        - name: tool_id
+          in: path
+          required: true
+          description: Unique tool identifier
+          schema:
+            type: string
+            pattern: ^tool_[a-z0-9]{3,}$
+            example: "tool_001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - boss_feedback
+              properties:
+                boss_feedback:
+                  type: string
+                  minLength: 1
+                  maxLength: 2000
+                  example: "Make buttons larger and add yellow background to CTAs. Increase font size for mobile view."
+                  description: Boss's change instructions (required, specific)
+            example:
+              boss_feedback: "Make buttons larger and add yellow background to CTAs. Increase font size for mobile view."
+      responses:
+        '200':
+          description: Revision requested successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - tool_id
+                  - status
+                  - boss_feedback
+                  - revision_webhook_called_at
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  tool_id:
+                    type: string
+                    example: "tool_001"
+                  status:
+                    type: string
+                    enum: [revision_requested]
+                    example: "revision_requested"
+                  boss_feedback:
+                    type: string
+                    example: "Make buttons larger and add yellow background to CTAs."
+                  revision_webhook_called_at:
+                    type: string
+                    format: date-time
+                    example: "2026-01-22T10:50:45.678Z"
+                    description: When Revision webhook was triggered
+                  estimated_completion:
+                    type: string
+                    example: "Tool will return to pending_review after AI regeneration (estimated 30-60 seconds)"
+              example:
+                success: true
+                tool_id: "tool_001"
+                status: "revision_requested"
+                boss_feedback: "Make buttons larger and add yellow background to CTAs."
+                revision_webhook_called_at: "2026-01-22T10:50:45.678Z"
+                estimated_completion: "Tool will return to pending_review after AI regeneration (estimated 30-60 seconds)"
+        '400':
+          description: Bad request - Missing boss_feedback or invalid tool_id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingFeedback:
+                  summary: Missing boss_feedback
+                  value:
+                    error: "VALIDATION_ERROR"
+                    message: "boss_feedback is required for revision request"
+                invalidToolId:
+                  summary: Invalid tool_id format
+                  value:
+                    error: "VALIDATION_ERROR"
+                    message: "Invalid tool_id format. Expected: tool_xxx"
+        '401':
+          description: Unauthorized - User not authenticated or not Boss
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "UNAUTHORIZED"
+                message: "Boss authentication required"
+        '404':
+          description: Not found - Tool with tool_id does not exist
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "NOT_FOUND"
+                message: "Tool with tool_id 'tool_001' not found"
+        '409':
+          description: Conflict - Tool status is not "pending_review"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                alreadyDeployed:
+                  summary: Tool already deployed
+                  value:
+                    error: "CONFLICT"
+                    message: "Tool is already deployed and cannot be revised"
+                alreadyRejected:
+                  summary: Tool already rejected
+                  value:
+                    error: "CONFLICT"
+                    message: "Tool has been rejected and cannot be revised"
+                revisionInProgress:
+                  summary: Revision already requested
+                  value:
+                    error: "CONFLICT"
+                    message: "Revision already in progress for this tool"
+        '500':
+          description: Internal server error - Revision webhook failed or MongoDB update failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                webhookFailed:
+                  summary: Revision webhook failed
+                  value:
+                    error: "WEBHOOK_ERROR"
+                    message: "Revision webhook failed: Connection timeout after 60s"
+                    details:
+                      webhook_url: "https://n8n.fasttrack.com/webhook/request-revision"
+                      error_code: "ECONNABORTED"
+                databaseError:
+                  summary: MongoDB update failed
+                  value:
+                    error: "DATABASE_ERROR"
+                    message: "Failed to update tool status: Write conflict"
+
+components:
+  securitySchemes:
+    ClerkJWT:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Clerk authentication JWT token
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details (optional)

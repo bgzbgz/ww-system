@@ -1,0 +1,147 @@
+# Submit Job to Factory Contract
+# Spec: 007-factory-integration
+# Per FR-001 through FR-015
+
+openapi: "3.0.3"
+info:
+  title: Factory Submission API
+  version: "1.0.0"
+  description: Submit jobs to the canonical Factory webhook
+
+paths:
+  /api/boss/jobs/{jobId}/submit:
+    post:
+      summary: Submit a job to Factory
+      description: |
+        Sends a DRAFT or FAILED_SEND job to the canonical Factory webhook.
+        On success, job status changes to SUBMITTED.
+        On failure, job status changes to FAILED_SEND.
+      operationId: submitJobToFactory
+      tags:
+        - Jobs
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The job ID to submit
+      responses:
+        "200":
+          description: Job successfully submitted to Factory
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmitSuccessResponse"
+        "400":
+          description: Job cannot be submitted (wrong status)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                already_submitted:
+                  value:
+                    error: "Job already sent to Factory"
+                    code: "ALREADY_SUBMITTED"
+                invalid_status:
+                  value:
+                    error: "Job cannot be submitted"
+                    code: "INVALID_STATUS"
+        "404":
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: "Job not found"
+                code: "NOT_FOUND"
+        "500":
+          description: Factory submission failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmitFailureResponse"
+
+components:
+  schemas:
+    SubmitSuccessResponse:
+      type: object
+      required:
+        - job_id
+        - status
+        - submitted_at
+        - message
+      properties:
+        job_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: [SUBMITTED]
+          example: "SUBMITTED"
+        submitted_at:
+          type: string
+          format: date-time
+          example: "2026-01-24T10:30:00.000Z"
+        message:
+          type: string
+          example: "Job sent to Factory"
+
+    SubmitFailureResponse:
+      type: object
+      required:
+        - job_id
+        - status
+        - error
+        - code
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [FAILED_SEND]
+          example: "FAILED_SEND"
+        error:
+          type: string
+          description: User-friendly error message
+          example: "Unable to reach Factory. Check your connection."
+        code:
+          type: string
+          enum:
+            - FACTORY_ERROR
+            - TIMEOUT
+            - INVALID_RESPONSE
+            - FILE_NOT_FOUND
+            - NETWORK_ERROR
+          example: "TIMEOUT"
+        last_attempt_at:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - code
+      properties:
+        error:
+          type: string
+          description: User-friendly error message
+        code:
+          type: string
+          description: Machine-readable error code
+
+# Error Message Mapping (per Fast Track DNA)
+# Code             | Message
+# -----------------|------------------------------------------
+# FACTORY_ERROR    | "Factory rejected the job. Try again."
+# TIMEOUT          | "Unable to reach Factory. Check your connection."
+# INVALID_RESPONSE | "Factory response invalid. Try again."
+# FILE_NOT_FOUND   | "File not found. Re-upload the document."
+# NETWORK_ERROR    | "Unable to reach Factory. Check your connection."
+# ALREADY_SUBMITTED| "Job already sent to Factory."

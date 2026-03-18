@@ -1,0 +1,116 @@
+# Factory Webhook Contract
+# Spec: 007-factory-integration
+# LOCKED: This URL must not change without a spec change
+
+webhook:
+  # CANONICAL URL - DO NOT CHANGE
+  url: "https://n8n-edge.fasttrack-diagnostic.com/webhook/b17aa9c0-88cb-48fe-a0f2-43096c382dea"
+
+  method: POST
+  timeout_seconds: 30
+  content_type: "application/json"
+
+# Request Payload
+request:
+  schema:
+    type: object
+    required:
+      - job_id
+      - original_filename
+      - file_type
+      - file_size_bytes
+      - file_content
+      - submitted_at
+    properties:
+      job_id:
+        type: string
+        format: uuid
+        description: Unique identifier for the job
+        example: "550e8400-e29b-41d4-a716-446655440000"
+
+      original_filename:
+        type: string
+        minLength: 1
+        maxLength: 255
+        description: Original uploaded filename
+        example: "market-analysis.pdf"
+
+      file_type:
+        type: string
+        enum: [PDF, DOCX, TXT, MD]
+        description: File type (uppercase)
+        example: "PDF"
+
+      file_size_bytes:
+        type: integer
+        minimum: 1
+        maximum: 10485760  # 10MB
+        description: File size in bytes
+        example: 2457600
+
+      file_content:
+        type: string
+        format: byte
+        description: Base64-encoded file binary content
+        example: "JVBERi0xLjQK..."
+
+      submitted_at:
+        type: string
+        format: date-time
+        description: ISO 8601 timestamp of submission
+        example: "2026-01-24T10:30:00.000Z"
+
+# Expected Response
+response:
+  success:
+    status_code: 200
+    description: Factory accepted the job
+    # Response body format is controlled by n8n, not Boss Office
+    # Any 200 response is considered success
+
+  failure:
+    # Any non-200 status code indicates failure
+    # Boss Office does not interpret the response body on failure
+    status_codes:
+      - 400  # Bad request
+      - 401  # Unauthorized
+      - 403  # Forbidden
+      - 404  # Not found
+      - 500  # Server error
+      - 502  # Bad gateway
+      - 503  # Service unavailable
+      - 504  # Gateway timeout
+
+# Error Handling Rules
+error_handling:
+  timeout:
+    condition: "No response within 30 seconds"
+    action: "Set job status to FAILED_SEND"
+    message: "Unable to reach Factory. Check your connection."
+
+  non_200:
+    condition: "HTTP status code is not 200"
+    action: "Set job status to FAILED_SEND"
+    message: "Factory rejected the job. Try again."
+
+  network_error:
+    condition: "Cannot establish connection"
+    action: "Set job status to FAILED_SEND"
+    message: "Unable to reach Factory. Check your connection."
+
+  invalid_response:
+    condition: "Response cannot be parsed"
+    action: "Set job status to FAILED_SEND"
+    message: "Factory response invalid. Try again."
+
+# Routing Rules (LOCKED)
+routing:
+  rule: "ALL jobs go to canonical webhook URL"
+  forbidden:
+    - "Department-specific webhooks"
+    - "Conditional routing based on file type"
+    - "Conditional routing based on job attributes"
+    - "Environment-based URL switching"
+  rationale: |
+    Per spec: "Boss Office MUST NOT attempt to route to department-specific webhooks.
+    Any internal Factory changes happen inside n8n, not in Boss Office."

@@ -1,0 +1,73 @@
+# Color Contract: Fast Track Brand Palette
+# All UI components MUST use only these colors
+
+palette:
+  black:
+    hex: "#000000"
+    rgb: [0, 0, 0]
+    usage:
+      - Primary text on light backgrounds
+      - All borders
+      - Dark section backgrounds
+      - Secondary button backgrounds
+    css_variable: "--ft-color-black"
+
+  white:
+    hex: "#FFFFFF"
+    rgb: [255, 255, 255]
+    usage:
+      - Page backgrounds (default)
+      - Text on dark backgrounds
+      - Card backgrounds
+    css_variable: "--ft-color-white"
+
+  grey:
+    hex: "#B2B2B2"
+    rgb: [178, 178, 178]
+    usage:
+      - Secondary/muted text
+      - Disabled element backgrounds
+      - Disabled element text
+      - Decorative borders (rare)
+    css_variable: "--ft-color-grey"
+    constraints:
+      - MUST NOT be used for primary text on white (fails WCAG AA)
+      - Use sparingly - Fast Track is high contrast
+
+  yellow:
+    hex: "#FFF469"
+    rgb: [255, 244, 105]
+    usage:
+      - Primary CTA button backgrounds
+      - Highlight/emphasis
+      - Active states
+      - Focus rings
+      - Error backgrounds (instead of red)
+      - Drag-over states
+    css_variable: "--ft-color-yellow"
+    constraints:
+      - Precision tool - use sparingly
+      - MUST NOT be used for large background areas
+      - MUST NOT be used with white text (fails contrast)
+
+forbidden_colors:
+  - red: "Do not use for errors - use yellow background instead"
+  - green: "Do not use for success - use black checkmark instead"
+  - blue: "Not in brand palette"
+  - gradients: "Solid colors only"
+  - transparency: "Except modal overlays"
+  - any_other_hex: "4-color palette is absolute"
+
+valid_combinations:
+  high_contrast:  # WCAG AAA
+    - { background: white, text: black, ratio: "21:1" }
+    - { background: black, text: white, ratio: "21:1" }
+    - { background: yellow, text: black, ratio: "16.3:1" }
+
+  accessible:  # WCAG AA
+    - { background: black, text: grey, ratio: "8.0:1" }
+
+invalid_combinations:  # Do not use
+  - { background: white, text: grey, ratio: "2.6:1", reason: "Fails WCAG AA" }
+  - { background: yellow, text: white, ratio: "1.3:1", reason: "Fails all standards" }
+  - { background: grey, text: white, ratio: "2.6:1", reason: "Fails WCAG AA" }

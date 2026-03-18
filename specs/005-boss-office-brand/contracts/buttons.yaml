@@ -1,0 +1,146 @@
+# Button Contract: Fast Track Brand Buttons
+# All interactive buttons MUST follow these patterns
+
+button_types:
+  primary:
+    description: "Main call-to-action buttons"
+    usage:
+      - "Approve & Deploy"
+      - "Upload"
+      - "Submit"
+      - "Confirm"
+    states:
+      default:
+        background: "#FFF469"  # yellow
+        color: "#000000"       # black text
+        border: none
+      hover:
+        background: "#000000"  # invert to black
+        color: "#FFFFFF"       # white text
+        border: none
+      active:
+        background: "#000000"
+        color: "#FFFFFF"
+        border: none
+      focus:
+        background: "#FFF469"
+        color: "#000000"
+        outline: "3px solid #000000"
+        outline_offset: "2px"
+      disabled:
+        background: "#B2B2B2"  # grey
+        color: "#FFFFFF"
+        cursor: not-allowed
+
+  secondary:
+    description: "Secondary actions, less prominent"
+    usage:
+      - "Reject"
+      - "Cancel"
+      - "Back"
+      - "Close"
+    states:
+      default:
+        background: "#000000"  # black
+        color: "#FFFFFF"       # white text
+        border: none
+      hover:
+        background: "#FFF469"  # invert to yellow
+        color: "#000000"       # black text
+        border: none
+      active:
+        background: "#FFF469"
+        color: "#000000"
+        border: none
+      focus:
+        background: "#000000"
+        color: "#FFFFFF"
+        outline: "3px solid #FFF469"
+        outline_offset: "2px"
+      disabled:
+        background: "#B2B2B2"
+        color: "#FFFFFF"
+        cursor: not-allowed
+
+  tertiary:
+    description: "Ghost buttons, minimal emphasis"
+    usage:
+      - "Request Revision"
+      - "Preview"
+      - "View Details"
+      - "Learn More"
+    states:
+      default:
+        background: transparent
+        color: "#000000"
+        border: "3px solid #000000"
+      hover:
+        background: "#000000"
+        color: "#FFFFFF"
+        border: "3px solid #000000"
+      active:
+        background: "#000000"
+        color: "#FFFFFF"
+        border: "3px solid #000000"
+      focus:
+        background: transparent
+        color: "#000000"
+        border: "3px solid #000000"
+        outline: "3px solid #FFF469"
+        outline_offset: "2px"
+      disabled:
+        background: transparent
+        color: "#B2B2B2"
+        border: "3px solid #B2B2B2"
+        cursor: not-allowed
+
+  icon:
+    description: "Icon-only buttons (close, menu, etc.)"
+    usage:
+      - "Close modal"
+      - "Toggle menu"
+      - "Expand/collapse"
+    states:
+      default:
+        background: transparent
+        color: "#000000"
+        border: none
+      hover:
+        background: "#FFF469"
+        color: "#000000"
+        border: none
+      focus:
+        background: transparent
+        color: "#000000"
+        outline: "3px solid #FFF469"
+        outline_offset: "2px"
+
+common_styles:
+  font_family: "Riforma"
+  font_size: "16px"
+  font_weight: 400
+  text_transform: none  # Sentence case for buttons
+  padding: "16px 24px"  # --ft-space-2 x --ft-space-3
+  border_radius: 0      # NEVER rounded
+  cursor: pointer
+  transition: "background-color 0.1s ease-in-out"  # Only allowed transition
+
+forbidden_patterns:
+  - rounded_corners: "border-radius must be 0"
+  - shadows: "No box-shadow on buttons"
+  - gradients: "Solid colors only"
+  - fancy_transitions: "Only simple color swap"
+  - icons_with_color: "Icons must be monochrome (black/white)"
+
+label_rules:
+  - use_imperative_verbs: true
+  - examples_good:
+      - "Upload"
+      - "Approve"
+      - "Reject"
+      - "Preview"
+      - "Submit"
+  - examples_bad:
+      - "Submit your file"
+      - "Click here to approve"
+      - "Please confirm"

@@ -1,0 +1,156 @@
+# Job Status Contract (Extended)
+# Spec: 007-factory-integration
+# Extends spec 006 job status
+
+# Status Values
+statuses:
+  DRAFT:
+    description: Job uploaded, not yet submitted to Factory
+    source: spec-006
+    submittable: true
+    actions:
+      - "Submit to Factory"
+      - "Delete"
+
+  SUBMITTED:
+    description: Job successfully sent to Factory
+    source: spec-006
+    submittable: false
+    actions: []
+    ui:
+      badge_color: "green"  # Or yellow per brand
+      message: null
+
+  PROCESSING:
+    description: Factory is processing the job
+    source: spec-006
+    submittable: false
+    actions: []
+
+  COMPLETED:
+    description: Factory finished processing successfully
+    source: spec-006
+    submittable: false
+    terminal: true
+    actions:
+      - "View Result"
+
+  FAILED:
+    description: Factory processing failed
+    source: spec-006
+    submittable: false
+    terminal: true
+    actions:
+      - "View Error"
+
+  FAILED_SEND:
+    description: Submission to Factory failed (network/service error)
+    source: spec-007
+    submittable: true  # Can retry
+    actions:
+      - "Retry"
+      - "Delete"
+    ui:
+      badge_color: "yellow"  # Per Fast Track brand (no red)
+      show_error: true
+      show_retry_button: true
+
+# State Transitions (This Spec)
+transitions:
+  - from: DRAFT
+    to: SUBMITTED
+    trigger: "200 OK from Factory"
+    updates:
+      - status: SUBMITTED
+      - submitted_at: "current timestamp"
+      - last_attempt_at: "current timestamp"
+
+  - from: DRAFT
+    to: FAILED_SEND
+    trigger: "Error or timeout"
+    updates:
+      - status: FAILED_SEND
+      - last_attempt_at: "current timestamp"
+      - failure_reason: "error description"
+
+  - from: FAILED_SEND
+    to: SUBMITTED
+    trigger: "Retry + 200 OK"
+    updates:
+      - status: SUBMITTED
+      - submitted_at: "current timestamp"
+      - last_attempt_at: "current timestamp"
+      - failure_reason: null
+
+  - from: FAILED_SEND
+    to: FAILED_SEND
+    trigger: "Retry + Error"
+    updates:
+      - last_attempt_at: "current timestamp"
+      - failure_reason: "new error description"
+
+# Blocked Transitions
+blocked_transitions:
+  - from: SUBMITTED
+    to: any
+    reason: "Cannot modify submitted jobs from Boss Office"
+
+  - from: PROCESSING
+    to: any
+    reason: "Only Factory can update processing jobs"
+
+  - from: COMPLETED
+    to: any
+    reason: "Terminal state"
+
+  - from: FAILED
+    to: any
+    reason: "Terminal state (Factory failure, not recoverable from Boss Office)"
+
+# UI Display Rules
+ui_rules:
+  DRAFT:
+    badge: "DRAFT"
+    badge_style: "ft-badge--default"
+    primary_action: "Submit to Factory"
+    primary_action_style: "ft-button--primary"
+
+  SUBMITTED:
+    badge: "SUBMITTED"
+    badge_style: "ft-badge--success"
+    primary_action: null
+    message: "Waiting for Factory"
+
+  FAILED_SEND:
+    badge: "FAILED"
+    badge_style: "ft-badge--warning"  # Yellow, not red (Fast Track brand)
+    primary_action: "Retry"
+    primary_action_style: "ft-button--primary"
+    error_visible: true
+    error_source: "job.failure_reason"
+
+# Error Messages (Fast Track DNA)
+error_messages:
+  FACTORY_ERROR:
+    message: "Factory rejected the job. Try again."
+    retryable: true
+
+  TIMEOUT:
+    message: "Unable to reach Factory. Check your connection."
+    retryable: true
+
+  INVALID_RESPONSE:
+    message: "Factory response invalid. Try again."
+    retryable: true
+
+  FILE_NOT_FOUND:
+    message: "File not found. Re-upload the document."
+    retryable: false
+
+  NETWORK_ERROR:
+    message: "Unable to reach Factory. Check your connection."
+    retryable: true
+
+  ALREADY_SUBMITTED:
+    message: "Job already sent to Factory."
+    retryable: false
