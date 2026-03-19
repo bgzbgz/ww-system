@@ -60,7 +60,9 @@ def parse_excel(path: str) -> list[dict]:
             "warning": warning,
         })
 
-    # Flag duplicates (overrides previous warning)
+    # Flag duplicates — duplicate_name takes highest priority because the admin
+    # must resolve ambiguous names before certificates can be generated.
+    # Any pre-existing email warning is intentionally overridden.
     name_counts = Counter(r["full_name"] for r in rows)
     for row in rows:
         if name_counts[row["full_name"]] > 1:

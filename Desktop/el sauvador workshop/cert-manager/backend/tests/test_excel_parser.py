@@ -17,9 +17,34 @@ def test_parse_derives_first_name_from_full_name():
     rows = parse_excel(os.path.join(FIXTURES, "valid.xlsx"))
     assert rows[1]["first_name"] == "Carlos"
 
-def test_parse_missing_email_sets_empty_string():
+def test_parse_missing_email_sets_empty_string_and_warning():
     rows = parse_excel(os.path.join(FIXTURES, "valid.xlsx"))
     assert rows[2]["email"] == ""
+    assert rows[2]["warning"] == "missing_email"
+
+def test_parse_invalid_email_sets_warning(tmp_path):
+    import openpyxl
+    path = tmp_path / "invalid_email.xlsx"
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(["Full Name", "Email", "Company"])
+    ws.append(["Test Person", "not-an-email", "TestCo"])
+    wb.save(path)
+    rows = parse_excel(str(path))
+    assert rows[0]["warning"] == "invalid_email"
+
+def test_parse_skips_blank_rows(tmp_path):
+    import openpyxl
+    path = tmp_path / "blank_rows.xlsx"
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(["Full Name", "Email", "Company"])
+    ws.append(["María García", "m@banco.com", "Banco"])
+    ws.append([None, None, None])  # blank row
+    ws.append(["Carlos López", "c@siman.com", "Siman"])
+    wb.save(path)
+    rows = parse_excel(str(path))
+    assert len(rows) == 2
 
 def test_parse_column_matching_is_case_insensitive(tmp_path):
     import openpyxl
