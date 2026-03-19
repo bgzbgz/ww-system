@@ -40,7 +40,6 @@ app.include_router(email_router, prefix="/api")
 
 def _seed_default_template():
     """Upload default certificate template to Supabase Storage if not already present."""
-    import os
     from db.client import get_supabase
     db = get_supabase()
     template_path = os.path.join(os.path.dirname(__file__), "templates", "certificate_base.html")
