@@ -17,20 +17,35 @@ export default function ParticipantTable({
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<Participant>>({});
+  const [actionError, setActionError] = useState<string | null>(null);
 
   async function save(id: string) {
-    await api.updateParticipant(id, editData);
-    setEditingId(null);
-    onUpdate();
+    try {
+      await api.updateParticipant(id, editData);
+      setEditingId(null);
+      setActionError(null);
+      onUpdate();
+    } catch (e: unknown) {
+      setActionError(e instanceof Error ? e.message : 'Save failed');
+    }
   }
 
   async function remove(id: string) {
-    await api.deleteParticipant(id);
-    onUpdate();
+    try {
+      await api.deleteParticipant(id);
+      setActionError(null);
+      onUpdate();
+    } catch (e: unknown) {
+      setActionError(e instanceof Error ? e.message : 'Delete failed');
+    }
   }
 
   return (
-    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+    <>
+      {actionError && (
+        <div style={{ color: '#f87171', background: '#450a0a', padding: '8px 12px', fontSize: 12 }}>{actionError}</div>
+      )}
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
       <thead>
         <tr style={{ background: '#0f172a' }}>
           {['#', 'Full Name', 'Email', 'Company', 'Status', ''].map((h) => (
@@ -86,5 +101,6 @@ export default function ParticipantTable({
         ))}
       </tbody>
     </table>
+    </>
   );
 }

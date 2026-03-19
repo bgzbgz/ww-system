@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import StepNav from '../components/StepNav';
 import ParticipantTable from '../components/ParticipantTable';
@@ -8,15 +8,20 @@ import type { Participant } from '../types';
 export default function Review() {
   const { workshopId } = useParams<{ workshopId: string }>();
   const [participants, setParticipants] = useState<Participant[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  async function load() {
+  const load = useCallback(async () => {
     if (!workshopId) return;
-    const data = await api.getParticipants(workshopId);
-    setParticipants(data);
-  }
+    try {
+      const data = await api.getParticipants(workshopId);
+      setParticipants(data);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Failed to load participants');
+    }
+  }, [workshopId]);
 
-  useEffect(() => { void load(); }, [workshopId]);
+  useEffect(() => { void load(); }, [load]);
 
   const warningCount = participants.filter((p) => p.warning).length;
 
@@ -45,6 +50,9 @@ export default function Review() {
             {warningCount > 0 ? `Fix ${warningCount} warning${warningCount > 1 ? 's' : ''} first` : 'Proceed to Editor →'}
           </button>
         </div>
+        {error && (
+          <div style={{ marginBottom: 16, color: '#f87171', background: '#450a0a', padding: '12px 16px', borderRadius: 8 }}>{error}</div>
+        )}
         <div style={{ background: '#1e293b', borderRadius: 10, overflow: 'hidden' }}>
           <ParticipantTable participants={participants} onUpdate={load} />
         </div>
