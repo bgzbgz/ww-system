@@ -33,7 +33,7 @@ Be specific. Each bullet point should reference something from the research."""
 
 
 def analyst(state: ResearchState) -> dict:
-    llm = ChatAnthropic(model="claude-3-5-haiku-20241022")
+    llm = ChatAnthropic(model="claude-haiku-4-5-20251001")
     prompt = ChatPromptTemplate.from_template(ANALYST_PROMPT)
     chain = prompt | llm | StrOutputParser()
 

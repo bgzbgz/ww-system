@@ -43,7 +43,7 @@ Use professional, clear language. Do not add any extra sections."""
 
 
 def writer(state: ResearchState) -> dict:
-    llm = ChatAnthropic(model="claude-3-5-haiku-20241022")
+    llm = ChatAnthropic(model="claude-haiku-4-5-20251001")
     prompt = ChatPromptTemplate.from_template(WRITER_PROMPT)
     chain = prompt | llm | StrOutputParser()
 

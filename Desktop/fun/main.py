@@ -29,7 +29,7 @@ def main():
     topic = sys.argv[1]
 
     print(f"\nStarting research on: {topic}")
-    print("Running: Researcher → Analyst → Writer")
+    print("Running: Researcher -> Analyst -> Writer")
     print("This takes 30-60 seconds...\n")
 
     # Build and run the graph

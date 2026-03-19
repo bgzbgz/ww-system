@@ -38,7 +38,7 @@ A4: [your answer]"""
 
 def researcher(state: ResearchState) -> dict:
     # Create the LLM — we use Haiku because it's fast and cost-effective for learning
-    llm = ChatAnthropic(model="claude-3-5-haiku-20241022")
+    llm = ChatAnthropic(model="claude-haiku-4-5-20251001")
 
     # Build the prompt template
     prompt = ChatPromptTemplate.from_template(RESEARCHER_PROMPT)
