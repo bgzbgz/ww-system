@@ -89,7 +89,7 @@ async def generate_workshop_pdfs(workshop_id: str) -> None:
             with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as f:
                 pdf_path = f.name
             try:
-                await asyncio.get_event_loop().run_in_executor(
+                await asyncio.get_running_loop().run_in_executor(
                     None, render_to_pdf, html, pdf_path
                 )
                 with open(pdf_path, "rb") as f:

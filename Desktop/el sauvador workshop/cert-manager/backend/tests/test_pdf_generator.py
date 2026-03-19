@@ -1,6 +1,4 @@
 import pytest
-import os
-from unittest.mock import patch, MagicMock
 from services.pdf_generator import hydrate_template, apply_layout
 
 SAMPLE_TEMPLATE = """
