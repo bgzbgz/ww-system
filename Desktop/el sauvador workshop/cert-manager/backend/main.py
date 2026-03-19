@@ -39,11 +39,21 @@ app.include_router(email_router, prefix="/api")
 # ---------------------------------------------------------------------------
 
 def _seed_default_template():
-    """Seed the default certificate template into the database if not present.
-
-    Full implementation in Task 8. This is a stub for now.
-    """
-    pass
+    """Upload default certificate template to Supabase Storage if not already present."""
+    import os
+    from db.client import get_supabase
+    db = get_supabase()
+    template_path = os.path.join(os.path.dirname(__file__), "templates", "certificate_base.html")
+    try:
+        db.storage.from_("templates").download("certificate_base.html")
+        # Already exists — nothing to do
+    except Exception:
+        with open(template_path, "rb") as f:
+            db.storage.from_("templates").upload(
+                "certificate_base.html",
+                f.read(),
+                {"content-type": "text/html", "upsert": "true"},
+            )
 
 
 @app.on_event("startup")

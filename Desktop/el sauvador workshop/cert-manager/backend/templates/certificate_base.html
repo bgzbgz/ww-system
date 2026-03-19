@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Montserrat:wght@400;600&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 297mm; height: 210mm;
+      background: #0a0a0a;
+      font-family: 'Montserrat', sans-serif;
+      overflow: hidden;
+      position: relative;
+    }
+    .border {
+      position: absolute; inset: 10mm;
+      border: 2px solid #c9a84c;
+    }
+    .logo {
+      position: absolute; top: 20mm; left: 50%;
+      transform: translateX(-50%);
+      color: #c9a84c; font-size: 11px; letter-spacing: 4px; text-transform: uppercase;
+    }
+    .title {
+      position: absolute; top: 40mm; left: 50%;
+      transform: translateX(-50%);
+      color: #ffffff; font-size: 13px; letter-spacing: 3px; text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .subtitle {
+      position: absolute; top: 52mm; left: 50%;
+      transform: translateX(-50%);
+      color: #888; font-size: 9px; letter-spacing: 2px; white-space: nowrap;
+    }
+    #full_name {
+      position: absolute;
+      font-family: 'Playfair Display', serif;
+      font-size: 36px;
+      color: #ffffff;
+      font-weight: 700;
+      left: 50%; top: 68mm;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+    #company {
+      position: absolute;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 14px;
+      color: #c9a84c;
+      left: 50%; top: 90mm;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+    #date {
+      position: absolute;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 11px;
+      color: #666;
+      left: 50%; top: 102mm;
+      transform: translateX(-50%);
+      white-space: nowrap;
+    }
+    .footer {
+      position: absolute; bottom: 18mm; left: 50%;
+      transform: translateX(-50%);
+      color: #444; font-size: 8px; letter-spacing: 2px; text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <div class="border"></div>
+  <div class="logo">Fast Track</div>
+  <div class="title">Certificate of Completion</div>
+  <div class="subtitle">has successfully completed</div>
+  <span id="full_name">{{full_name}}</span>
+  <span id="company">{{company}}</span>
+  <span id="date">{{date}}</span>
+  <div class="footer">Fast Track Executive Program · AI &amp; Business Strategy</div>
+</body>
+</html>
