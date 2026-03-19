@@ -55,7 +55,7 @@ async def on_startup():
 # ---------------------------------------------------------------------------
 # Serve React frontend (production)
 # ---------------------------------------------------------------------------
-DIST_DIR = Path(__file__).parent / "dist"
+DIST_DIR = Path(__file__).parent.parent / "frontend" / "dist"
 
 if DIST_DIR.exists():
     app.mount("/assets", StaticFiles(directory=str(DIST_DIR / "assets")), name="assets")
