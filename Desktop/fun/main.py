@@ -35,16 +35,21 @@ def main():
     # Build and run the graph
     graph = build_graph()
 
-    # invoke() starts the graph with an initial state
-    # All fields must be present — empty strings for the ones not yet filled
-    result = graph.invoke(
-        {
-            "topic": topic,
-            "research": "",
-            "analysis": "",
-            "report": "",
-        }
-    )
+    try:
+        # invoke() starts the graph with an initial state
+        # All fields must be present — empty strings for the ones not yet filled
+        result = graph.invoke(
+            {
+                "topic": topic,
+                "research": "",
+                "analysis": "",
+                "report": "",
+            }
+        )
+    except Exception as e:
+        print(f"\nError running the workflow: {e}")
+        print("Check that your ANTHROPIC_API_KEY is set correctly in .env")
+        sys.exit(1)
 
     # Print the report to the terminal
     print(result["report"])
@@ -54,7 +59,7 @@ def main():
     with open("report.md", "w", encoding="utf-8") as f:
         f.write(result["report"])
 
-    print(f"\nReport saved to report.md")
+    print("\nReport saved to report.md")
 
 
 # This guard means: only run main() if this file is run directly
