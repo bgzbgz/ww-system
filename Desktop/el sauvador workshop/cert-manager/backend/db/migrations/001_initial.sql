@@ -1,9 +1,14 @@
 -- Enums
-CREATE TYPE workshop_status AS ENUM ('draft', 'generating', 'ready', 'scheduled', 'sent');
-CREATE TYPE email_status AS ENUM ('pending', 'sent', 'failed');
+DO $$ BEGIN
+    CREATE TYPE workshop_status AS ENUM ('draft', 'generating', 'ready', 'scheduled', 'sent');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE email_status AS ENUM ('pending', 'sent', 'failed');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Workshops
-CREATE TABLE workshops (
+CREATE TABLE IF NOT EXISTS workshops (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -13,11 +18,13 @@ CREATE TABLE workshops (
     template_path TEXT,
     layout_json JSONB,
     email_subject TEXT DEFAULT 'Your Fast Track Certificate, {{first_name}}',
+    -- email_body_path is bucket-relative (bucket = "templates"), so 'email_body.html'
+    -- resolves to db.storage.from_("templates").download("email_body.html")
     email_body_path TEXT DEFAULT 'email_body.html'
 );
 
 -- Participants
-CREATE TABLE participants (
+CREATE TABLE IF NOT EXISTS participants (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     workshop_id UUID NOT NULL REFERENCES workshops(id) ON DELETE CASCADE,
     first_name TEXT NOT NULL,
@@ -31,8 +38,11 @@ CREATE TABLE participants (
     email_sent_at TIMESTAMPTZ
 );
 
+-- Index for the dominant query pattern: fetch all participants by workshop
+CREATE INDEX IF NOT EXISTS participants_workshop_id_idx ON participants(workshop_id);
+
 -- OAuth tokens (one row per provider, upserted on token refresh)
-CREATE TABLE oauth_tokens (
+CREATE TABLE IF NOT EXISTS oauth_tokens (
     provider TEXT PRIMARY KEY,
     refresh_token TEXT NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
