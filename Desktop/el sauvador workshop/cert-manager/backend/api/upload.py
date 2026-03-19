@@ -1,5 +1,6 @@
 import os
 import tempfile
+from pathlib import Path
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from services.excel_parser import parse_excel, ExcelParseError
 from db.client import get_supabase
@@ -26,7 +27,7 @@ async def upload_excel(file: UploadFile = File(...)):
 
     db = get_supabase()
 
-    workshop_name = file.filename.replace(".xlsx", "").replace(".xls", "")
+    workshop_name = Path(file.filename).stem
     workshop_res = db.table("workshops").insert({"name": workshop_name}).execute()
     workshop = workshop_res.data[0]
     workshop_id = workshop["id"]
