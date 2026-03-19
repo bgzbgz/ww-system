@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import type { LayoutJson, LayoutBlock, Participant } from '../types';
 
 const DEFAULT_LAYOUT: LayoutJson = {
@@ -25,11 +25,11 @@ export default function CertEditor({
 
   const preview = participants[previewIdx];
 
-  function updateBlock(field: keyof LayoutJson, updates: Partial<LayoutBlock>) {
+  const updateBlock = useCallback((field: keyof LayoutJson, updates: Partial<LayoutBlock>) => {
     setLayout(l => ({ ...l, [field]: { ...l[field], ...updates } }));
-  }
+  }, []);
 
-  function startDrag(field: keyof LayoutJson, e: React.MouseEvent) {
+  const startDrag = useCallback((field: keyof LayoutJson, e: React.MouseEvent) => {
     e.preventDefault();
     const container = containerRef.current;
     if (!container) return;
@@ -46,7 +46,7 @@ export default function CertEditor({
     }
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
-  }
+  }, [updateBlock]);
 
   const sel = selected ? layout[selected] : null;
 

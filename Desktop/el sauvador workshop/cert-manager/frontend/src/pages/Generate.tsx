@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import StepNav from '../components/StepNav';
 import ProgressBar from '../components/ProgressBar';
@@ -20,6 +20,8 @@ export default function Generate() {
       setError(e instanceof Error ? e.message : 'Failed to start generation');
     }
   }
+
+  const handleComplete = useCallback(() => setDone(true), []);
 
   return (
     <div style={{ minHeight: '100vh', background: '#0f172a', color: '#e2e8f0' }}>
@@ -47,7 +49,7 @@ export default function Generate() {
           </>
         ) : (
           <div style={{ background: '#1e293b', borderRadius: 12, padding: 32 }}>
-            <ProgressBar workshopId={workshopId!} onComplete={() => setDone(true)} />
+            <ProgressBar workshopId={workshopId!} onComplete={handleComplete} />
           </div>
         )}
       </div>

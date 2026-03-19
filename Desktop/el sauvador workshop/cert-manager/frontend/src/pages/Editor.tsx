@@ -28,7 +28,7 @@ export default function Editor() {
 
   useEffect(() => { void load(); }, [load]);
 
-  async function handleSave(layout: LayoutJson) {
+  const handleSave = useCallback(async (layout: LayoutJson) => {
     if (!workshopId) return;
     try {
       await api.saveLayout(workshopId, layout);
@@ -36,7 +36,7 @@ export default function Editor() {
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to save layout');
     }
-  }
+  }, [workshopId, navigate]);
 
   if (error) {
     return (
