@@ -1,0 +1,61 @@
+{
+  "name": "Fast Track Certificate Emails",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cert-emails",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000001",
+      "name": "Receive from cert-manager",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "cert-emails"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "toRecipients": "={{ $json.body.email }}",
+        "subject": "=Your Fast Track Certificate of Completion, {{ $json.body.first_name }}",
+        "bodyContent": "=<!DOCTYPE html>\n<html>\n<head>\n<meta charset=\"UTF-8\">\n<style>\n  body { margin: 0; padding: 0; background: #f0f0f0; font-family: Arial, sans-serif; }\n  .wrapper { max-width: 600px; margin: 30px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }\n  .header { background: #000000; padding: 32px 40px; text-align: center; }\n  .header h1 { margin: 0 0 6px; color: #ffffff; font-size: 22px; letter-spacing: 1px; text-transform: uppercase; }\n  .header p { margin: 0; color: #fff469; font-size: 14px; }\n  .body { padding: 36px 40px; color: #1a1a1a; }\n  .body p { line-height: 1.7; margin: 0 0 16px; font-size: 15px; }\n  .btn-wrap { text-align: center; margin: 28px 0; }\n  .btn { display: inline-block; padding: 14px 36px; background: #000000; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 15px; font-weight: 700; letter-spacing: 0.5px; }\n  .footer { background: #f8f8f8; border-top: 1px solid #e8e8e8; padding: 20px 40px; text-align: center; color: #888; font-size: 12px; }\n</style>\n</head>\n<body>\n<div class=\"wrapper\">\n  <div class=\"header\">\n    <h1>The Fast Track Way</h1>\n    <p>Ultimate performance in the age of AI</p>\n  </div>\n  <div class=\"body\">\n    <p>Dear {{ $json.body.first_name }},</p>\n    <p>Congratulations on completing the <strong>Fast Track Way Workshop</strong>. Your Certificate of Completion is ready.</p>\n    <div class=\"btn-wrap\">\n      <a href=\"{{ $json.body.certificate_url }}\" class=\"btn\">Download Your Certificate</a>\n    </div>\n    <p>We hope the workshop gave you the clarity, tools, and momentum to drive ultimate performance in everything you do.</p>\n    <p>With appreciation,<br><strong>Fast Track Ltd</strong></p>\n  </div>\n  <div class=\"footer\">\n    Fast Track Ltd &nbsp;|&nbsp; fasttrack.com\n  </div>\n</div>\n</body>\n</html>",
+        "bodyContentType": "html",
+        "additionalFields": {}
+      },
+      "id": "a1b2c3d4-0002-0002-0002-000000000002",
+      "name": "Send via Outlook",
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [520, 300],
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "",
+          "name": "Microsoft Outlook account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Receive from cert-manager": {
+      "main": [
+        [
+          {
+            "node": "Send via Outlook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "instanceId": "local"
+  }
+}
