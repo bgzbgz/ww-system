@@ -66,7 +66,8 @@ DIST_DIR = Path(__file__).parent.parent / "frontend" / "dist"
 
 if DIST_DIR.exists():
     app.mount("/assets", StaticFiles(directory=str(DIST_DIR / "assets")), name="assets")
-    app.mount("/fonts", StaticFiles(directory=str(DIST_DIR / "fonts")), name="fonts")
+    if (DIST_DIR / "fonts").exists():
+        app.mount("/fonts", StaticFiles(directory=str(DIST_DIR / "fonts")), name="fonts")
 
     @app.get("/{full_path:path}", include_in_schema=False)
     async def spa_fallback(full_path: str):
