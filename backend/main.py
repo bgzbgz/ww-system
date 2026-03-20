@@ -18,6 +18,16 @@ from api.auth import router as auth_router
 
 app = FastAPI(title="Cert Manager API")
 
+
+@app.get("/debug/env", include_in_schema=False)
+async def debug_env():
+    return {
+        "N8N_WEBHOOK_URL": bool(os.environ.get("N8N_WEBHOOK_URL")),
+        "N8N_WEBHOOK_URL_value_start": os.environ.get("N8N_WEBHOOK_URL", "")[:20],
+        "SUPABASE_URL": bool(os.environ.get("SUPABASE_URL")),
+        "SUPABASE_SERVICE_KEY": bool(os.environ.get("SUPABASE_SERVICE_KEY")),
+    }
+
 # ---------------------------------------------------------------------------
 # Auth routes (no /api prefix — mounted at /auth via router prefix)
 # ---------------------------------------------------------------------------
