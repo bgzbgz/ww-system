@@ -1,14 +1,15 @@
+import os
+import httpx
+from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException
 from db.client import get_supabase
-from services.webhook_sender import send_workshop_emails, send_single_email
+from services.webhook_sender import send_single_email
 
 router = APIRouter()
 
 
-
 @router.post("/workshops/{workshop_id}/send")
 async def send_now(workshop_id: str):
-    import os, httpx
     db = get_supabase()
     res = db.table("workshops").select("status, name").eq("id", workshop_id).limit(1).execute()
     if not res.data:
@@ -46,7 +47,6 @@ async def send_now(workshop_id: str):
             except Exception as exc:
                 status = "failed"
                 err = str(exc)[:200]
-            from datetime import datetime, timezone
             db.table("participants").update({
                 "email_status": status,
                 "email_error": err,
